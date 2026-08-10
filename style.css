@@ -1,0 +1,262 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap');
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: #f9ffe9;
+    }
+
+    body {
+      display: block;
+      margin: 0;
+      padding: 0;
+      font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    img {
+      width: 100%;
+      height: auto;
+      display: block;
+      max-width: 100vw;
+      margin-bottom: 0;
+    }
+
+    .banner-text {
+      font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 20px;
+      line-height: 1.6;
+      color: #222;
+      text-align: left;
+      max-width: 1000px;
+      margin: 18px auto 0;
+      padding: 100px 56px 20px;
+    }
+
+    .highlight {
+      background-color: #c5ea4b;
+      padding: 0 .2em;
+      border-radius: 3px;
+      color: inherit;
+    }
+
+    .cartogram-wrapper {
+      max-width: 1000px;
+      margin: 50px auto 40px;
+      padding: 20px 56px;
+      overflow: visible;
+    }
+
+    /* Communication Tool Styles */
+    .comm-tool {
+      max-width: 1000px;
+      margin: 0 auto 56px;
+      padding: 40px 56px;
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      border: none;
+    }
+    .comm-tool h2 {
+      font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-weight: 500;
+      font-size: 32px;
+      font-style: italic;
+      margin: 0 0 8px;
+      color: #121212;
+      letter-spacing: -0.5px;
+    }
+    .comm-tool .comm-subtitle {
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      color: #5f5f5f;
+      margin-bottom: 12px;
+      font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .comm-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-start;
+      padding-bottom: 20px;
+    }
+    .comm-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      min-width: min(100px, 100%);
+    }
+
+    /* Uniform sizing for all dropdown input boxes */
+    .comm-group select,
+    .comm-row .comm-inline select,
+    #state-picker {
+      width: 100%;
+      max-width: 260px;
+      flex: 0 0 auto;
+      border: none;
+      border-bottom: 1px solid #4b5563;
+      background: #c5ea4b;
+      padding: 10px 24px 10px 12px;
+      font-size: 16px;
+      font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #171617;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg fill='%23171617' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+      background-size: 18px;
+      border-radius: 4px 4px 0 0;
+    }
+
+    /* Custom hover/checked styling hack for options */
+    .comm-group select option:hover,
+    .comm-row .comm-inline select option:hover,
+    #state-picker option:hover,
+    .comm-group select option:checked,
+    .comm-row .comm-inline select option:checked,
+    #state-picker option:checked {
+      box-shadow: 0 0 10px 100px #b2db32 inset !important;
+      color: #171617 !important;
+    }
+
+    .comm-row .comm-inline {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .comm-summary {
+      display: grid;
+      gap: 18px;
+      margin-top: 40px;
+    }
+    .comm-score {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .comm-score .number {
+      margin: 0;
+      font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 64px;
+      line-height: 1;
+      color: #0e0b0b;
+    }
+    .comm-score .percent {
+      margin: 0;
+      font-size: 32px;
+      font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #0e0b0b;
+    }
+    .comm-copy {
+      font-size: 16px;
+      line-height: 1.5;
+      color: #374151;
+      max-width: 600px;
+      margin: 0;
+      font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .comm-breakdown {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #d1d5db;
+      margin-top: 20px;
+    }
+    .comm-breakdown .item .value {
+      display: block;
+      font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 1;
+      color: #141414;
+    }
+    .comm-breakdown .item .label {
+      display: block;
+      margin-top: 4px;
+      font-size: 16px;
+      color: #4b5563;
+      font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* Searchable Custom Dropdown Styles */
+    .searchable-select {
+      position: relative;
+      width: 100%;
+      max-width: 260px;
+    }
+
+    .searchable-input {
+      width: 100%;
+      box-sizing: border-box;
+      border: none;
+      border-bottom: 1px solid #4b5563;
+      background: #c5ea4b;
+      padding: 10px 28px 10px 12px;
+      font-size: 16px;
+      font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #171617;
+      outline: none;
+      cursor: text;
+      border-radius: 4px 4px 0 0;
+      background-image: url("data:image/svg+xml;utf8,<svg fill='%23171617' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+      background-size: 18px;
+    }
+
+    .searchable-input::placeholder {
+      color: #555555;
+      font-style: italic;
+    }
+
+    .searchable-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      max-height: 240px;
+      overflow-y: auto;
+      background: #fdfef3;
+      border: 1px solid #cbd5e1;
+      border-top: none;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+      z-index: 1000;
+      display: none;
+      border-radius: 0 0 4px 4px;
+    }
+
+    .searchable-dropdown.open {
+      display: block;
+    }
+
+    .searchable-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 15px;
+      color: #121212;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(0,0,0,0.03);
+    }
+
+    .searchable-item:hover {
+      background-color: #b2db32;
+    }
+
+    .searchable-count {
+      font-size: 13px;
+      color: #4b5563;
+      font-weight: 500;
+    }

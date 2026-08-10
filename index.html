@@ -4,54 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>iTool Banner</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      background: #ffffff;
-    }
-
-    body {
-      display: block;
-      margin: 0;
-      padding: 0;
-    }
-
-    img {
-      width: 100%;
-      height: auto;
-      display: block;
-      max-width: 100vw;
-      margin-bottom: 0;
-    }
-
-    .banner-text {
-      font-family: 'IBM Plex Serif', serif;
-      font-size: 20px;
-      line-height: 1.6;
-      color: #222;
-      text-align: left;
-      max-width: 900px;
-      margin: 18px auto 0;
-      padding: 100px 56px 20px;
-    }
-
-    .highlight {
-      background-color: #c5ea4b;
-      padding: 0 .2em;
-      border-radius: 3px;
-      color: inherit;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
 <body>
-  <img src="Main final.png" alt="Banner image">
-  <p class="banner-text"><strong>There's an old Indian saying: <span class="highlight"><em>"Kos-kos par badle paani, chaar kos par vaani"</em></span>—the water changes every few miles, and so does the language.</strong>While the saying celebrates India's rich linguistic diversity, it also raises a simple everyday question: <strong>How easily can we communicate as we travel across the country?</strong><br><br>Languages rarely stop where political boundaries begin.<br>Some stretch across state borders, while others remain deeply rooted in a single region.<br><br>Using India's Census data on <span class="highlight">mother tongues, bilingualism, and trilingualism</span>, the article estimates how easy would it be for you to communicate if you decide to travel within the country.</p>
-
-  </p>
-  <div id="cartogram" style="max-width: 980px; margin: 32px auto 40px; padding: 0 16px;"></div>
+  <img src="1 (3).png" alt="Banner image">
+  <p class="banner-text"><strong>There's an old Indian saying: <span class="highlight"><em>"Kos-kos par badle paani, chaar kos par vaani"</em></span>—the water changes every few miles, and so does the language.</strong>While the saying celebrates India's rich linguistic diversity, it also raises a simple everyday question: <strong>How easily can we communicate as we travel across the country?</strong><br><br>Languages rarely stop where political boundaries begin. Some stretch across state borders, while others remain deeply rooted in a single region. Using India's Census data on <span class="highlight">mother tongues, bilingualism, and trilingualism</span>, the article estimates how easy would it be for you to communicate if you decide to travel within the country.<br><br><br>To begin with, the treemaps below show the language distribution in our country. Each state contains a mix of languages. The larger the block, the larger the share of speakers.<br></p>
+  
+  <div id="cartogram" class="cartogram-wrapper"></div>
+  
+  <!-- Interactive Communication Tool Container -->
+  <div id="communication-tool"></div>
 
   <script>
     const LANGUAGE_COLORS = {
@@ -69,20 +32,30 @@
       "TIBETAN": "#293241", "WANCHO": "#E07A5F", "OTHERS": "#B0B7BD"
     };
 
+    function toTitleCase(text) {
+      return String(text)
+        .toLowerCase()
+        .replace(/\b[a-z]/g, char => char.toUpperCase());
+    }
+
     function generateCartogram(data, options = {}) {
-      const cellSize = options.cellSize || 95;
+      const scaleFactor = 0.8;
       const maxCol = d3.max(data, d => d.col) || 0;
       const maxRow = d3.max(data, d => d.row) || 0;
-      const width = options.width || Math.max(980, (maxCol + 1) * cellSize + 20);
-      const height = options.height || ((maxRow + 1) * cellSize + 40);
+      const cellSize = options.cellSize || Math.round(60 * scaleFactor);
+      const cellGap = options.cellGap || Math.round(110 * scaleFactor);
+      const labelOffset = Math.round(18 * scaleFactor);
+      const rowHeight = cellSize + labelOffset + cellGap;
+      const width = options.width || ((maxCol + 1) * (cellSize + cellGap) + 20);
+      const height = options.height || ((maxRow + 1) * rowHeight + 180);
 
       const svg = d3.create("svg")
-        .attr("viewBox", `0 0 ${width} ${height}`)
+        .attr("viewBox", `-60 -60 ${width} ${height}`)
         .attr("preserveAspectRatio", "xMidYMid meet")
         .style("width", "100%")
         .style("height", "auto")
-        .style("background", "#ffffff")
-        .style("font-family", "system-ui, sans-serif");
+        .style("background", "#f9ffe9")
+        .attr("font-family", "'Atlas Grotesk', -apple-system, BlinkMacSystemFont, sans-serif")
 
       let hoveredLanguage = null;
       let allRects = [];
@@ -98,7 +71,7 @@
           } else if (langName === hoveredLanguage) {
             d3.select(rectNode).attr("fill-opacity", 1);
           } else {
-            d3.select(rectNode).attr("fill-opacity", 0.2);
+            d3.select(rectNode).attr("fill-opacity", 0.5);
           }
         });
 
@@ -119,7 +92,7 @@
           if (hoveredLanguage) {
             legendGroup.style("display", "block");
             legendGroup.select("text.legend-text")
-              .text(hoveredLanguage)
+              .text(toTitleCase(hoveredLanguage))
               .attr("fill", LANGUAGE_COLORS[hoveredLanguage] || "#333333");
           } else {
             legendGroup.style("display", "none");
@@ -129,9 +102,8 @@
 
       data.forEach(stateItem => {
         const stateSize = stateItem.size || cellSize;
-        const x0 = stateItem.col * cellSize + (cellSize - stateSize) / 2 + 10;
-        const y0 = stateItem.row * cellSize + (cellSize - stateSize) / 2 + 10;
-
+        const x0 = stateItem.col * (cellSize + cellGap) + (cellSize - stateSize) / 2;
+        const y0 = stateItem.row * (cellSize + cellGap) + (cellSize - stateSize) / 2;
         const rawLangs = (stateItem.languages && stateItem.languages.length > 0)
           ? stateItem.languages
           : [
@@ -156,7 +128,7 @@
         d3.treemap()
           .size([stateSize, stateSize])
           .tile(d3.treemapSquarify.ratio(1))
-          .padding(0.7)(root);
+          .padding(0.8)(root);
 
         const stateGroup = svg.append("g")
           .attr("transform", `translate(${x0}, ${y0})`);
@@ -171,11 +143,11 @@
             .attr("height", leaf.y1 - leaf.y0)
             .attr("fill", LANGUAGE_COLORS[leaf.data.name] || "#B0B7BD")
             .attr("stroke", "#ffffff")
-            .attr("stroke-width", 0.6)
+            .attr("stroke-width", 0.9)
             .style("cursor", "pointer");
 
           rect.append("title")
-            .text(`${stateItem.state}\n${leaf.data.name}: ${origTotal.toLocaleString()} speakers`);
+            .text(`${toTitleCase(stateItem.state)}\n${toTitleCase(leaf.data.name)}: ${origTotal.toLocaleString()} speakers`);
 
           rect.on("mouseenter", () => {
             hoveredLanguage = leaf.data.name;
@@ -186,13 +158,24 @@
           allRects.push({ node: rect.node(), data: leaf });
         });
 
+        const labelText = stateGroup.append("text")
+          .attr("x", stateSize / 2)
+          .attr("y", stateSize + 30)
+          .attr("text-anchor", "middle")
+          .attr("fill", "#111827")
+          .attr("font-family", "'Atlas Grotesk', -apple-system, BlinkMacSystemFont, sans-serif")
+          .attr("font-size", "20px")
+          .attr("font-weight", "700")
+          .attr("pointer-events", "none")
+          .text(toTitleCase(stateItem.state));
+
         const valText = stateGroup.append("text")
           .attr("x", 0)
-          .attr("y", -4)
+          .attr("y", -6)
           .attr("text-anchor", "start")
           .attr("fill", "#111827")
-          .attr("font-family", "'Source Serif Pro', Georgia, serif")
-          .attr("font-size", "9px")
+          .attr("font-family", "'Atlas Grotesk', -apple-system, BlinkMacSystemFont, sans-serif")
+          .attr("font-size", "18px")
           .attr("font-weight", "600")
           .attr("pointer-events", "none")
           .text("");
@@ -206,15 +189,15 @@
       });
 
       legendGroup = svg.append("g")
-        .attr("transform", "translate(40, 20)")
+        .attr("transform", "translate(60, -40)")
         .style("display", "none");
 
       legendGroup.append("text")
         .classed("legend-text", true)
-        .attr("x", 0)
+        .attr("x", -60)
         .attr("y", 0)
-        .attr("font-family", "'Source Serif Pro', Georgia, serif")
-        .attr("font-size", "18px")
+       .attr("font-family", "'Atlas Grotesk', -apple-system, BlinkMacSystemFont, sans-serif")
+        .attr("font-size", "30px")
         .attr("font-weight", "700");
 
       return svg.node();
@@ -226,7 +209,7 @@
 
       rawData.forEach(d => {
         const state = d.State.trim();
-        const name = d.Language.trim();
+        const name = d.Language.trim().toUpperCase();
         const total = Number(d["Total Persons"]);
         if (!stateMap.has(state)) {
           stateMap.set(state, []);
@@ -245,16 +228,187 @@
         state,
         row: Math.floor(index / 7),
         col: index % 7,
-        size: 98,
         languages: stateMap.get(state).sort((a, b) => b.total - a.total)
       }));
+    }
+
+    function summarizeStates(rawData) {
+      const summary = new Map();
+      rawData.forEach(d => {
+        const state = d.State.trim();
+        const name = d.Language.trim().toUpperCase();
+        const total = Number(d["Total Persons"]);
+        if (!summary.has(state)) {
+          summary.set(state, { state, total: 0, languages: new Map() });
+        }
+        const item = summary.get(state);
+        item.total += total;
+        item.languages.set(name, (item.languages.get(name) || 0) + total);
+      });
+
+      summary.forEach(stateItem => {
+        const languageList = Array.from(stateItem.languages.entries())
+          .map(([name, total]) => ({ 
+            name, 
+            total, 
+            share: stateItem.total > 0 ? total / stateItem.total : 0 
+          }))
+          .sort((a, b) => b.total - a.total);
+        stateItem.languageList = languageList;
+      });
+
+      return summary;
+    }
+
+    function createCommunicationTool(stateSummary, languageOptions) {
+      const states = Array.from(stateSummary.keys()).sort((a, b) => a.localeCompare(b));
+      const container = d3.select("#communication-tool");
+      
+      container.html(`
+        <div class="comm-tool">
+          <h2><strong>So, what are the odds you'll be understood?</strong></h2>
+            <p style="font-size: 13px; color: #6b7280; font-style: normal; margin-bottom: 20px;">
+            Estimates are based on official Census of India 2011 language data by state.
+          </p>
+
+          <div class="comm-row" style="margin-top:10px;">
+            <div class="comm-group" style="max-width: 280px;">
+               <p class="comm-subtitle">I am travelling to</p>
+              <select id="state-picker">
+                ${states.map(state => `<option value="${state}" ${state.toLowerCase() === "andaman & nicobar islands" ? "selected" : ""}>${toTitleCase(state)}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+
+          <p class="comm-subtitle">Languages I am fluent with</p>
+          
+        <div class="comm-row">
+            <div class="comm-group">
+              <div class="comm-inline">
+                <select id="lang-a">
+                   <option value="">Select language*</option>
+                  ${languageOptions.map(lang => `<option value="${lang}" ${lang === "GUJARATI" ? "selected" : ""}>${toTitleCase(lang)}</option>`).join("")}
+                </select>
+                <select id="lang-b">
+                  <option value="">Select language (optional)</option>
+                  ${languageOptions.map(lang => `<option value="${lang}">${toTitleCase(lang)}</option>`).join("")}
+                </select>
+                <select id="lang-c">
+                  <option value="">Select language (optional)</option>
+                  ${languageOptions.map(lang => `<option value="${lang}">${toTitleCase(lang)}</option>`).join("")}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          
+
+          <div class="comm-summary">
+            <div class="comm-score">
+              <p class="number" id="reach-value">--</p>
+              <p class="percent">%</p>
+            </div>
+            <p class="comm-copy" id="reach-copy">
+              An estimated <strong>--%</strong> of people speak this language well enough to hold a conversation with you.
+            </p>
+            <div class="comm-breakdown" id="breakdown-cards"></div>
+          </div>
+        </div>
+      `);
+
+      const langA = document.getElementById("lang-a");
+      const langB = document.getElementById("lang-b");
+      const langC = document.getElementById("lang-c");
+      const picker = document.getElementById("state-picker");
+      const reachValue = document.getElementById("reach-value");
+      const reachCopy = document.getElementById("reach-copy");
+      const breakdownCards = document.getElementById("breakdown-cards");
+
+      function formatPercent(value) {
+        if (value > 0 && value < 0.0005) return "<0.1%";
+        const percentVal = value * 100;
+        if (percentVal < 1 && percentVal > 0) {
+          return `${percentVal.toFixed(2)}%`;
+        }
+        return `${Math.round(percentVal * 10) / 10}%`;
+      }
+
+      function calculateUnion(languages, stateData) {
+        const uniqueLanguages = Array.from(new Set(languages));
+        const shares = uniqueLanguages
+          .map(lang => {
+            const found = stateData.languageList.find(item => item.name === lang);
+            return found ? found.share : 0;
+          })
+          .filter(share => share > 0);
+
+        if (shares.length === 0) return 0;
+        return 1 - shares.reduce((product, share) => product * (1 - share), 1);
+      }
+
+      function renderState() {
+        if (!langA.value) {
+          if (langB.value) {
+            langA.value = langB.value;
+            langB.value = "";
+          } else if (langC.value) {
+            langA.value = langC.value;
+            langC.value = "";
+          }
+        }
+
+        const state = picker.value;
+        const allSelectedLanguages = [langA.value, langB.value, langC.value].filter(Boolean);
+        const languages = Array.from(new Set(allSelectedLanguages));
+        const summary = stateSummary.get(state);
+        if (!summary) return;
+
+        const unionShare = calculateUnion(languages, summary);
+        const formattedResult = formatPercent(unionShare);
+        
+        reachValue.textContent = formattedResult.replace('%', '');
+        
+        const totalUnionSpeakers = Math.round(unionShare * summary.total);
+
+        const titleCaseLangs = languages.map(toTitleCase);
+        let langString = titleCaseLangs.join(', ');
+        if (titleCaseLangs.length > 1) {
+          const last = titleCaseLangs.pop();
+          langString = titleCaseLangs.join(', ') + ' and ' + last;
+        }
+
+        reachCopy.innerHTML = `An estimated <strong>${formattedResult}</strong> of people in ${toTitleCase(state)} — approximately <strong>${totalUnionSpeakers.toLocaleString()} people</strong> out of ${summary.total.toLocaleString()} — speak ${langString} well enough to hold a conversation with you.`;
+
+        breakdownCards.innerHTML = languages.map(lang => {
+          const found = summary.languageList.find(item => item.name === lang);
+          const shareVal = found ? found.share : 0;
+          const langTotal = found ? found.total : 0;
+          return `
+            <div class="item">
+              <span class="value">${formatPercent(shareVal)}</span>
+              <span class="label">${toTitleCase(lang)} (${langTotal.toLocaleString()} speakers)</span>
+            </div>
+          `;
+        }).join("");
+      }
+
+      [langA, langB, langC, picker].forEach(el => {
+        if (el) {
+          el.addEventListener("change", renderState);
+        }
+      });
+      renderState();
     }
 
     d3.csv("Language_Statewise.csv", d3.autoType)
       .then(rawData => {
         const indiaGridData = buildStateGrid(rawData);
-        const chart = generateCartogram(indiaGridData, { cellSize: 110, width: 980, height: 660 });
+        const chart = generateCartogram(indiaGridData, { cellSize: 200 });
         d3.select("#cartogram").node().appendChild(chart);
+
+        const stateSummary = summarizeStates(rawData);
+        const languageOptions = Array.from(new Set(rawData.map(d => d.Language.trim().toUpperCase()))).sort((a, b) => a.localeCompare(b));
+        createCommunicationTool(stateSummary, languageOptions);
       })
       .catch(error => {
         d3.select("#cartogram")
