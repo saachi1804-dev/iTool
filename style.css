@@ -252,7 +252,7 @@
     }
 
     .searchable-item:hover {
-      background-color: #b2db32;
+      background-color: rgb(219, 50, 143);
     }
 
     .searchable-count {
