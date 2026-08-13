@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call me by your name</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Platypi:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+
+    <style>
+        .sankey-section {
+            width: 100%;
+            min-height: 100vh;
+            padding: 70px 50px 70px 0;
+            background: #FFFFF1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 18px;
+        }
+
+        .graph-pair {
+            width: 100%;
+            max-width: 1500px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 18px;
+            margin-left: -45px;
+        }
+
+        #sankey-container {
+            width: calc(100% + 180px);
+            max-width: none;
+            height: min(82vh, 760px);
+            margin-left: -600px;
+            overflow: visible;
+            position: relative;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            flex: 1 1 auto;
+        }
+
+        #sankey-container object {
+            display: block;
+            width: 100%;
+            height: 100%;
+            max-height: calc(100vh - 220px);
+            min-width: 100%;
+            object-fit: contain;
+            overflow: visible;
+            background: transparent;
+            transform: translateY(18px) scale(1.3);
+            transform-origin: left center;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        #prefixChart {
+            width: min(420px, 32vw);
+            min-width: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+
+        #prefixChart svg {
+            width: 100%;
+            height: auto;
+            display: block;
+            overflow: visible;
+            transform: scale(1.2) translateX(-8px);
+            transform-origin: center;
+        }
+
+        .sankey-filter-bar {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .sankey-filter-pill {
+            border: 1px solid rgba(17, 17, 17, 0.35);
+            background: #fffdf7;
+            color: #111;
+            border-radius: 999px;
+            padding: 7px 14px;
+            font-family: 'Platypi', serif;
+            font-size: 0.9rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sankey-filter-pill:hover,
+        .sankey-filter-pill.is-active {
+            border-color: rgba(17, 17, 17, 0.6);
+            background: #f4f1ea;
+            color: #111;
+            transform: translateY(-1px);
+        }
+
+        .sankey-filter-pill.is-active {
+            font-weight: 600;
+        }
+
+        .sankey-filter-pill:focus-visible {
+            outline: 2px solid #F483D5;
+            outline-offset: 2px;
+        }
+
+        .suffix-label {
+            font-family: 'Platypi', serif;
+            font-size: 8px;
+            fill: #111;
+            dominant-baseline: middle;
+        }
+
+        .category-label {
+            font-family: 'Platypi', serif;
+            font-size: 12px;
+            font-weight: 600;
+            fill: #111;
+            dominant-baseline: middle;
+        }
+
+        @media (max-width: 900px) {
+            .sankey-section {
+                padding: 50px 20px;
+            }
+
+            .suffix-label {
+                font-size: 7px;
+            }
+
+            .category-label {
+                font-size: 10px;
+            }
+
+            .sankey-filter-pill,
+            .sankey-suffix-pill {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- =========================================
+         STICKY CARDS SECTION
+         ========================================= -->
+    <section class="sticky-cards-container">
+        <div class="sticky-wrapper">
+            <!-- Background Image -->
+            <div class="sticky-background">
+                <img src="image.png" alt="">
+            </div>
+
+            <!-- Cards -->
+            <div class="card-image" data-index="0">
+                <img src="1.png" alt="Artwork n1">
+            </div>
+
+            <div class="card-image" data-index="1">
+                <img src="2.png" alt="Artwork n2">
+            </div>
+
+            <div class="card-image" data-index="2">
+                <img src="3.png" alt="Artwork n3">
+            </div>
+
+            <div class="card-image" data-index="3">
+                <img src="n4.png" alt="Artwork n4">
+            </div>
+        </div>
+    </section>
+
+
+    <!-- =========================================
+         MAIN CONTENT
+         ========================================= -->
+    <main class="content-container">
+        <!-- Banner Image -->
+        <div class="banner-container">
+            <img
+                src="NEW.png"
+                alt="Call me by your name banner"
+                class="banner-image"
+            >
+        </div>
+
+        <!-- Intro Text -->
+        <div class="intro-text">
+            <p>
+                India has an interesting history of place names. Some names are as straightforward as the places they describe; called by the name of a river, a landscape, or a location. Others have stories that run deeper, shaped by languages, legends, rulers, and the layers of history that came before them. By breaking down the prefixes, suffixes, and roots hiding in these names, we can start to see these stories behind the map.
+            </p>
+
+            <p>
+                Sometimes these building blocks often repeat across regions, creating patterns on the map for a few urban agglomerations. So let's start from the end. What are some common Suffixes used.
+            </p>
+        </div>
+    </main>
+
+
+    <!-- =========================================
+         ALIGNED COLUMN GRID SECTION (Increased Left Margin)
+         ========================================= -->
+    <section style="width: 100%; box-sizing: border-box; padding: 60px 60px 130px 100px; display: flex; justify-content: center;">
+        <div id="gridContainer" style="display: grid; grid-template-columns: repeat(4, minmax(200px, 1fr)); gap: 20px 30px; width: 100%; max-width: 1100px; justify-items: start; align-items: center;"></div>
+    </section>
+
+    <div class="intro-text" style="max-width: 650px; margin: 0 auto 40px; padding: 0 20px; box-sizing: border-box;">
+        <h2 class="main-title" style="text-align: left; margin-bottom: 20px; color: #000; font-size: clamp(1.5rem, 2vw, 2rem);">
+            Suffixes and the meaning they bring to the names
+        </h2>
+
+        <p>
+            At first, these endings look like a pattern in the names.
+        </p>
+
+        <p>
+            Look closer, and they begin to read like <strong>clues</strong>. While all of these come from different language origins, they can broadly be categorised into a few groups.
+        </p>
+    </div>
+
+    <section class="sankey-section">
+        <div class="sankey-filter-bar" id="sankeyFilterBar" aria-label="Suffix categories"></div>
+
+        <div class="graph-pair">
+            <div id="sankey-container">
+                <object id="graphObject" data="./graph1.svg" type="image/svg+xml" aria-label="Suffix and category network graph"></object>
+            </div>
+            <div id="prefixChart" aria-label="Packed suffix chart"></div>
+        </div>
+    </section>
+
+    <div class="intro-text" style="max-width: 650px; margin: 0 auto 40px; padding: 80px 20px 20px; box-sizing: border-box;">
+        <h2 class="main-title" style="text-align: left; margin-bottom: 40px; color: #000; font-size: clamp(1.5rem, 2vw, 2rem);">
+            The other half — Prefixes
+        </h2>
+
+        <p>
+            A lot of city names also rely on prefixes.
+        </p>
+
+        <p>
+            While the suffix can tell us <strong>what kind of place</strong> we are looking at, the prefix often gives us a clue about <strong>what made it distinctive</strong>. A river. A hill. An animal. A person. A landscape. These names commonly draw from a few recurring themes: founders, tribes and communities, geographical and water features, local flora and fauna, soil characteristics, religious deities, and caste or social groups. Together, they reveal what people considered distinctive or significant about a place.
+
+        </p>
+
+        <p>
+            <strong>Different beginnings but they too eventually start falling into a few larger patterns.</strong>
+        </p>
+    </div>
+
+    <div id="themeChartWrapper" style="position: relative; width: 100%; max-width: 1100px; margin: 0 auto 80px; padding: 14px 20px 0; box-sizing: border-box;">
+        <div id="themeFilterMenu" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 5; width: min(240px, 65vw);"></div>
+        <div id="themeStackChart" style="width: 100%; min-height: 760px; padding-top: 48px; box-sizing: border-box;"></div>
+    </div>
+
+
+    <!-- =========================================
+         CARD SCROLL & HIGHLIGHT ANIMATION SCRIPT
+         ========================================= -->
+    <script>
+        const categoryRanges = {
+            'Settlement Type (generic)': { min: 0, max: 360 },
+            'Fortification': { min: 360, max: 470 },
+            'Locative/Uncertain': { min: 470, max: 545 },
+            'Geographical Feature': { min: 545, max: 600 },
+            'Market/Economic': { min: 600, max: 620 },
+            'Water Feature (hydronym)': { min: 620, max: 642 },
+            'Auspicious places': { min: 642, max: 700 }
+        };
+
+        const filterBar = document.getElementById('sankeyFilterBar');
+        const graphObject = document.getElementById('graphObject');
+        const allCategories = Object.keys(categoryRanges);
+        let activeCategory = 'all';
+
+        function renderPackedSuffixChart() {
+            const chartRoot = document.getElementById('prefixChart');
+            if (!chartRoot || !window.d3) return;
+
+            const data = {
+                name: 'Suffixes',
+                children: [
+                    { name: 'pur', value: 70 },
+                    { name: 'nagar', value: 25 },
+                    { name: 'abad', value: 24 },
+                    { name: 'ur', value: 20 },
+                    { name: 'garh', value: 18 },
+                    { name: 'gaon', value: 12 },
+                    { name: 'oli', value: 10 },
+                    { name: 'ore', value: 10 },
+                    { name: 'tur', value: 9 },
+                    { name: 'ni', value: 9 },
+                    { name: 'puram', value: 7 },
+                    { name: 'kad', value: 6 },
+                    { name: 'hat', value: 6 },
+                    { name: 'khed', value: 6 },
+                    { name: 'sar', value: 6 },
+                    { name: 'kottai', value: 6 },
+                    { name: 'kulam', value: 6 },
+                    { name: 'wadi', value: 6 },
+                    { name: 'ner', value: 6 },
+                    { name: 'para', value: 5 },
+                    { name: 'palli', value: 5 },
+                    { name: 'kudi', value: 5 },
+                    { name: 'bhavi', value: 5 },
+                    { name: 'kot', value: 5 },
+                    { name: 'vali', value: 5 },
+                    { name: 'pet', value: 5 },
+                    { name: 'angadi', value: 4 },
+                    { name: 'chhara', value: 4 },
+                    { name: 'ganj', value: 4 },
+                    { name: 'patnam', value: 4 },
+                    { name: 'uru', value: 4 },
+                    { name: 'kunnu', value: 4 },
+                    { name: 'nad', value: 4 },
+                    { name: 'adam', value: 3 },
+                    { name: 'ana', value: 3 },
+                    { name: 'ssery', value: 3 },
+                    { name: 'wada', value: 3 },
+                    { name: 'nagaram', value: 3 },
+                    { name: 'palayam', value: 3 },
+                    { name: 'paramba', value: 3 },
+                    { name: 'madai', value: 3 },
+                    { name: 'giri', value: 3 },
+                    { name: 'gud', value: 2 },
+                    { name: 'guda', value: 2 },
+                    { name: 'gadh', value: 2 },
+                    { name: 'valasa', value: 2 },
+                    { name: 'vada', value: 2 },
+                    { name: 'seema', value: 2 },
+                    { name: 'kota', value: 2 },
+                    { name: 'kadavu', value: 2 },
+                    { name: 'koil', value: 2 },
+                    { name: 'kal', value: 2 },
+                    { name: 'keri', value: 2 },
+                    { name: 'chery', value: 2 },
+                    { name: 'assa', value: 2 },
+                    { name: 'bari', value: 2 },
+                    { name: 'athani', value: 2 },
+                    { name: 'pat', value: 2 },
+                    { name: 'oor', value: 2 },
+                    { name: 'nallur', value: 2 },
+                    { name: 'ole', value: 2 },
+                    { name: 'prayag', value: 2 },
+                    { name: 'pete', value: 2 },
+                    { name: 'kurichi', value: 2 },
+                    { name: 'vadra', value: 2 },
+                    { name: 'pudur', value: 2 },
+                    { name: 'puri', value: 2 },
+                    { name: 'samudram', value: 2 },
+                    { name: 'put', value: 2 },
+                    { name: 'pattinam', value: 2 },
+                    { name: 'patti', value: 2 },
+                    { name: 'mura', value: 2 }
+                ]
+            };
+
+            const width = 928;
+            const height = width;
+            const margin = 1;
+
+            const pack = d3.pack()
+                .size([width - margin * 2, height - margin * 2])
+                .padding(3);
+
+            const root = pack(d3.hierarchy(data)
+                .sum(d => d.value)
+                .sort((a, b) => b.value - a.value));
+
+            const svg = d3.create('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .attr('viewBox', [-margin, -margin, width, height])
+                .attr('style', "width: 100%; height: auto; font-family: 'Platypi', serif;")
+                .attr('text-anchor', 'middle');
+
+            svg.append('style').text(
+                '.node { cursor: pointer; }' +
+                '.node circle { transition: transform 0.2s ease-in-out, fill 0.2s ease-in-out; transform-box: fill-box; transform-origin: center; }' +
+                '.node text { font-size: 12px; transition: transform 0.2s ease-in-out; transform-box: fill-box; transform-origin: center; pointer-events: none; }' +
+                '.leaf-node:hover circle { transform: scale(1.25); fill: #F483D5 !important; }' +
+                '.leaf-node:hover text { transform: scale(2); }'
+            );
+
+            const node = svg.append('g')
+                .selectAll('g')
+                .data(root.descendants())
+                .join('g')
+                .attr('class', d => d.children ? 'node root-node' : 'node leaf-node')
+                .attr('transform', d => `translate(${d.x},${d.y})`);
+
+            node.on('mouseenter', function(event, d) {
+                d3.select(this).raise();
+            });
+
+            node.append('circle')
+                .attr('fill', d => d.children ? 'none' : '#F8853E')
+                .attr('stroke', d => d.children ? '#ccc' : null)
+                .attr('stroke-width', d => d.children ? 1.5 : 0)
+                .attr('r', d => d.r);
+
+            const text = node.filter(d => !d.children && d.r > 10)
+                .append('text')
+                .attr('fill', '#ffffff')
+                .style('font-family', "'Platypi', serif");
+
+            text.selectAll('tspan')
+                .data(d => d.data.name.split(/(?=[A-Z][a-z])|\s+/g))
+                .join('tspan')
+                .attr('x', 0)
+                .attr('y', (d, i, nodes) => `${i - nodes.length / 2 + 0.35}em`)
+                .text(d => d);
+
+            chartRoot.innerHTML = '';
+            chartRoot.appendChild(svg.node());
+        }
+        function renderObservableThemeChart() {
+            const chartRoot = document.getElementById('themeStackChart');
+            const filterMenu = document.getElementById('themeFilterMenu');
+            if (!chartRoot || !window.d3) return;
+
+            const data = [
+                {
+                    name: 'Founder',
+                    subcategories: [
+                        { name: 'Jaipur', value: 1 },
+                        { name: 'Jodhpur', value: 1 },
+                        { name: 'Kumaranahalli', value: 1 },
+                        { name: 'Nayakanahatti', value: 1 },
+                        { name: 'Jammu', value: 1 },
+                        { name: 'Bhathinda', value: 1 },
+                        { name: 'Byrapura', value: 1 }
+                    ]
+                },
+                {
+                    name: 'Tribe',
+                    subcategories: [
+                        { name: 'Bhilwara', value: 1 },
+                        { name: 'Merwara', value: 1 }
+                    ]
+                },
+                {
+                    name: 'Geographical feature',
+                    subcategories: [
+                        { name: 'Doondhar', value: 1 },
+                        { name: 'Soodsar', value: 1 },
+                        { name: 'Napasar', value: 1 },
+                        { name: 'Doongarpur', value: 1 },
+                        { name: 'Kalluru', value: 1 },
+                        { name: 'Kaduru', value: 1 },
+                        { name: 'Betturu', value: 1 },
+                        { name: 'Mulgunda', value: 1 }
+                    ]
+                },
+                {
+                    name: 'Flora and fauna',
+                    subcategories: [
+                        { name: 'Amli', value: 1 },
+                        { name: 'Pipalaya', value: 1 },
+                        { name: 'Kherloo', value: 1 },
+                        { name: 'Kherli', value: 1 },
+                        { name: 'Kherdhar', value: 1 },
+                        { name: 'Khejri', value: 1 },
+                        { name: 'Nawiluru', value: 1 },
+                        { name: 'Handiyuru', value: 1 },
+                        { name: 'Kolihalli', value: 1 }
+                    ]
+                },
+                {
+                    name: 'Water feature (hydronym)',
+                    subcategories: [
+                        { name: 'Varanasi', value: 1 },
+                        { name: 'Bharuch', value: 1 }
+                    ]
+                },
+                {
+                    name: 'Soil color',
+                    subcategories: [
+                        { name: 'Haldighati', value: 1 },
+                        { name: 'Kali Pahari', value: 1 },
+                        { name: 'Ratighati', value: 1 }
+                    ]
+                },
+                {
+                    name: 'Religious (deities)',
+                    subcategories: [
+                        { name: 'Arbud', value: 1 },
+                        { name: 'Ramanathapura', value: 1 },
+                        { name: 'Ramakrishna Gram', value: 1 }
+                    ]
+                },
+                {
+                    name: 'Caste cultural marker',
+                    subcategories: [
+                        { name: 'Brahmpuri', value: 1 },
+                        { name: 'Bamanvas', value: 1 },
+                        { name: 'Charanvas', value: 1 },
+                        { name: 'Khatipura', value: 1 }
+                    ]
+                }
+            ];
+
+            const width = 1400;
+            const height = 760;
+            const margin = { top: 40, right: 60, bottom: 30, left: 120 };
+
+            const svg = d3.create('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .attr('viewBox', [0, 0, width, height])
+                .attr('style', "max-width: 100%; height: auto; font-family: 'Platypi', serif; display: block; margin: 0 auto;");
+
+            const tooltip = svg.append('g')
+                .style('visibility', 'hidden')
+                .style('pointer-events', 'none');
+
+            tooltip.append('rect')
+                .attr('width', 200)
+                .attr('height', 52)
+                .attr('fill', '#FFFFF8')
+                .attr('stroke', '#333333')
+                .attr('stroke-width', 1)
+                .attr('rx', 2);
+
+            const tooltipText = tooltip.append('text')
+                .attr('x', 12)
+                .attr('y', 22)
+                .style('font-family', "'Platypi', serif")
+                .style('font-size', '13px')
+                .style('fill', '#000000');
+
+            tooltipText.append('tspan')
+                .attr('id', 'tooltip-name')
+                .attr('x', 12)
+                .attr('dy', 0)
+                .style('font-weight', 'bold');
+
+            tooltipText.append('tspan')
+                .attr('id', 'tooltip-theme')
+                .attr('x', 12)
+                .attr('dy', 18)
+                .style('font-weight', 'normal');
+
+            const rowGap = 54;
+            const clusterStartY = 90;
+            const clusterCanvasWidth = width - margin.left - margin.right;
+
+            const themeGroups = svg.append('g')
+                .attr('transform', `translate(${margin.left},0)`);
+
+            const activeThemes = new Set(data.map(theme => theme.name));
+
+            function updateThemeFilters() {
+                if (!filterMenu) return;
+
+                [...filterMenu.querySelectorAll('.theme-filter-button')].forEach(button => {
+                    const themeName = button.dataset.themeName;
+                    const isActive = activeThemes.has(themeName);
+                    button.classList.toggle('is-active', isActive);
+                    button.style.opacity = isActive ? '1' : '0.55';
+                });
+
+                [...chartRoot.querySelectorAll('[data-theme-group]')].forEach(group => {
+                    const groupTheme = group.dataset.themeGroup;
+                    group.style.display = activeThemes.has(groupTheme) ? '' : 'none';
+                });
+            }
+
+            if (filterMenu) {
+                filterMenu.innerHTML = '';
+
+                const selectWrap = document.createElement('div');
+                selectWrap.style.cssText = "position: relative; width: 100%;";
+
+                const select = document.createElement('select');
+                select.style.cssText = "width: 100%; border: 1px solid rgba(17,17,17,.35); background: #fffdf7; color: #111; border-radius: 999px; padding: 10px 36px 10px 14px; font-family: 'Platypi', serif; font-size: 14px; appearance: none; -webkit-appearance: none; outline: none; cursor: pointer;";
+
+                const allOption = document.createElement('option');
+                allOption.value = 'all';
+                allOption.textContent = 'All themes';
+                select.appendChild(allOption);
+
+                data.forEach(theme => {
+                    const option = document.createElement('option');
+                    option.value = theme.name;
+                    option.textContent = theme.name;
+                    select.appendChild(option);
+                });
+
+                const arrow = document.createElement('div');
+                arrow.textContent = '▾';
+                arrow.style.cssText = "position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #111; font-size: 12px;";
+
+                select.addEventListener('change', (event) => {
+                    const selected = event.target.value;
+                    if (selected === 'all') {
+                        activeThemes.clear();
+                        data.forEach(theme => activeThemes.add(theme.name));
+                    } else {
+                        activeThemes.clear();
+                        activeThemes.add(selected);
+                    }
+                    updateThemeFilters();
+                });
+
+                selectWrap.appendChild(select);
+                selectWrap.appendChild(arrow);
+                filterMenu.appendChild(selectWrap);
+            }
+
+            data.forEach((theme, themeIndex) => {
+                const group = themeGroups.append('g')
+                    .attr('data-theme-group', theme.name);
+                const rowY = clusterStartY + themeIndex * rowGap;
+                const boxes = theme.subcategories;
+                const clusterWidth = Math.max(180, Math.min(clusterCanvasWidth, boxes.length * 34 + 40));
+                const startX = (clusterCanvasWidth - clusterWidth) / 2;
+
+                boxes.forEach((sub, index) => {
+                    const isWide = boxes.length > 4;
+                    const widthValue = isWide ? 18 : 22;
+                    const heightValue = isWide ? 18 : 22;
+                    const xOffset = startX + index * 26 + (themeIndex % 2 === 0 ? 6 : 18);
+                    const yOffset = rowY + (index % 2 === 0 ? 0 : 18 + (themeIndex % 3 === 0 ? 8 : 0));
+
+                    const box = group.append('rect')
+                        .attr('x', xOffset)
+                        .attr('y', yOffset)
+                        .attr('width', widthValue)
+                        .attr('height', heightValue)
+                        .attr('fill', '#F483D5')
+                        .attr('stroke', '#F483D5')
+                        .attr('rx', 2)
+                        .style('cursor', 'pointer')
+                        .style('transition', 'opacity 0.2s ease');
+
+                    box.on('mouseenter', function() {
+                        d3.select(this).attr('opacity', 0.82);
+
+                        const tooltipX = Math.min(width - 220, Math.max(12, xOffset + 10));
+                        const tooltipY = Math.max(8, yOffset - 34);
+
+                        tooltip.raise();
+                        tooltip.attr('transform', `translate(${tooltipX}, ${tooltipY})`)
+                            .style('visibility', 'visible');
+
+                        svg.select('#tooltip-name').text(`City: ${sub.name}`);
+                        svg.select('#tooltip-theme').text(`Theme: ${theme.name}`);
+                    })
+                    .on('mousemove', function() {
+                        const tooltipX = Math.min(width - 220, Math.max(12, xOffset + 10));
+                        const tooltipY = Math.max(8, yOffset - 34);
+
+                        tooltip.raise();
+                        tooltip.attr('transform', `translate(${tooltipX}, ${tooltipY})`)
+                            .style('visibility', 'visible');
+                    })
+                    .on('mouseleave', function() {
+                        d3.select(this).attr('opacity', 1);
+                        tooltip.style('visibility', 'hidden');
+                    });
+                });
+            });
+
+            
+
+            const extraSquares = [
+                { x: 250, y: 170, w: 30, h: 30 },
+                { x: 640, y: 230, w: 20, h: 20 },
+                { x: 920, y: 330, w: 38, h: 38 },
+                { x: 1070, y: 220, w: 26, h: 26 },
+                { x: 510, y: 460, w: 32, h: 32 },
+                { x: 760, y: 500, w: 24, h: 24 },
+                { x: 1180, y: 550, w: 28, h: 28 },
+                { x: 340, y: 580, w: 22, h: 22 },
+                { x: 490, y: 160, w: 34, h: 34 },
+                { x: 840, y: 190, w: 18, h: 18 },
+                { x: 1010, y: 610, w: 24, h: 24 },
+                { x: 1240, y: 320, w: 20, h: 20 },
+                { x: 680, y: 610, w: 26, h: 26 }
+            ];
+
+            extraSquares.forEach(square => {
+                svg.append('rect')
+                    .attr('x', square.x)
+                    .attr('y', square.y)
+                    .attr('width', square.w)
+                    .attr('height', square.h)
+                    .attr('fill', '#F483D5')
+                    .attr('stroke', '#F483D5')
+                    .attr('rx', 2);
+            });
+
+            chartRoot.innerHTML = '';
+            chartRoot.appendChild(svg.node());
+            return svg.node();
+        }
+
+        const afterSquaresText = document.createElement('div');
+        afterSquaresText.className = 'intro-text';
+        afterSquaresText.style.cssText = 'max-width: 650px; margin: 0 auto 40px; padding: 20px 20px 0; box-sizing: border-box;';
+        afterSquaresText.innerHTML = `
+            <h2 class="main-title" style="text-align: left; margin-bottom: 20px; color: #000; font-size: clamp(1.5rem, 2vw, 2rem);">
+                And then sometimes names are changed.
+            </h2>
+
+            <p>
+                So far, we've treated names as clues to the past. But names don't always stay put.
+            </p>
+
+            <p>
+                Places get renamed for a number of reasons: to <strong>shed colonial spellings, restore older or local names, honour people, reflect a regional language, or reclaim a particular version of history.</strong>
+            </p>
+
+            <p>
+                Sometimes, it's as simple as changing <em>Bombay</em> to <strong>Mumbai</strong> or <em>Calcutta</em> to <strong>Kolkata</strong>; bringing the official name closer to local usage. Other times, the change reaches much further into history. (map in progress)
+            </p>
+
+            <p>
+                <br>
+                <br>
+              <div style="text-align: left; margin-bottom: 13px; color: #000;">
+    
+    <h3 style="font-size: 18px; margin: 0 0 10px 0; font-weight: 600;">
+        Methods &amp; Notes
+    </h3>
+
+    <p style="font-size: 13px; line-height: 1.5; margin: 0; font-weight: 400;">
+        I compiled etymological information on Indian city and place names from historical, linguistic, geographical, and government sources. Names were broken into identifiable <strong>prefixes and suffixes</strong> and grouped into recurring themes such as geographical features, water bodies, flora and fauna, founders, communities, religious associations, and settlements. These meanings are based on <strong>documented or commonly attributed origins</strong>, and some names have multiple or contested interpretations. <br><br>
+        The aim is not to establish a single definitive origin, but to identify broader patterns in how places have been named and what these names reveal about the people, landscapes, and histories associated with them.<br><br>
+        Resources:<br>
+        <ul style="margin: 0; padding-left: 20px; font-size: 11px; line-height: 1.5;">
+            <li><a href="https://www.indianculture.gov.in/archives/etymology-indian-place-names" target="_blank">Etymology of Indian Place Names</a> - National Archives of India</li>
+            <li><a href="https://www.indianculture.gov.in/archives/etymology-indian-place-names" target="_blank">A Dictionary of Indian Place Names</a> - Oxford University Press</li>
+            <li><a href="https://gabriel.org/brief-guide-to-indian-place-names/" target="_blank">Brief Guide to Indian Place Names</a> - Gabriel's Blog</li>
+            <li><a href="https://easyets.com/unraveling-indias-place-names/" target="_blank">Unraveling India’s Place Names: A Linguistic Journey Through Its Cities and Villages</a> - Easyets.com</li>
+        </ul>
+        <br>
+        <br>
+        <ul style="margin: 0; padding-left: 15px; font-size: 11px; line-height: 1.5;">
+        <em>Find link to my creative process.<em>
+        <ul>
+    </p>
+</div>
+            </p>
+        `;
+
+        const chartWrapper = document.getElementById('themeChartWrapper');
+        if (chartWrapper) {
+            chartWrapper.insertAdjacentElement('afterend', afterSquaresText);
+        }
+
+        function getCategoryFromPath(path) {
+            const d = path.getAttribute('d') || '';
+            const yMatch = d.match(/M\s*[-\d.]+\s+([-\d.]+)/i);
+            if (!yMatch) return null;
+
+            const y = parseFloat(yMatch[1]);
+            const category = Object.entries(categoryRanges).find(([, range]) => y >= range.min && y <= range.max);
+            return category ? category[0] : null;
+        }
+
+        function updateGraphHighlight(activeCategory) {
+            const svgDoc = graphObject && graphObject.contentDocument;
+            if (!svgDoc) return;
+
+            const networkPaths = [...svgDoc.querySelectorAll('path[stroke]')];
+            networkPaths.forEach(path => {
+                const pathCategory = getCategoryFromPath(path);
+                const shouldHighlight = !activeCategory || activeCategory === 'all' || pathCategory === activeCategory;
+
+                path.style.opacity = shouldHighlight ? '1' : '0.18';
+                path.style.stroke = '#111111';
+                path.style.strokeOpacity = shouldHighlight ? '0.3' : '0.12';
+                path.style.strokeWidth = shouldHighlight ? '1.8' : '1.1';
+            });
+        }
+
+        function createFilterPills() {
+            const allButton = document.createElement('button');
+            allButton.type = 'button';
+            allButton.className = 'sankey-filter-pill is-active';
+            allButton.textContent = 'All categories';
+            allButton.addEventListener('click', () => {
+                document.querySelectorAll('.sankey-filter-pill').forEach(btn => btn.classList.toggle('is-active', btn === allButton));
+                updateGraphHighlight('all');
+            });
+            filterBar.appendChild(allButton);
+
+            allCategories.forEach(category => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'sankey-filter-pill';
+                button.textContent = category;
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.sankey-filter-pill').forEach(btn => btn.classList.toggle('is-active', btn === button));
+                    updateGraphHighlight(category);
+                });
+                filterBar.appendChild(button);
+            });
+        }
+
+        function hideLeftSuffixLabels() {
+            const svgDoc = graphObject && graphObject.contentDocument;
+            if (!svgDoc) return;
+
+            const textNodes = [...svgDoc.querySelectorAll('text, tspan')];
+            textNodes.forEach(node => {
+                try {
+                    const bbox = node.getBBox ? node.getBBox() : null;
+                    const x = bbox ? bbox.x : parseFloat(node.getAttribute('x') || '0');
+
+                    if (x <= 210) {
+                        node.setAttribute('display', 'none');
+                        node.style.display = 'none';
+                        node.style.visibility = 'hidden';
+                    }
+                } catch (e) {
+                    // Ignore label nodes that are not measurable.
+                }
+            });
+        }
+
+        graphObject.addEventListener('load', () => {
+            hideLeftSuffixLabels();
+            updateGraphHighlight('all');
+            createFilterPills();
+            renderPackedSuffixChart();
+            renderObservableThemeChart();
+        });
+
+        const stickySection = document.querySelector('.sticky-cards-container');
+        const cards = document.querySelectorAll('.card-image');
+
+        window.addEventListener('scroll', () => {
+            const rect = stickySection.getBoundingClientRect();
+            const sectionHeight = stickySection.offsetHeight;
+            const viewportHeight = window.innerHeight;
+
+            let progress = -rect.top / (sectionHeight - viewportHeight);
+            progress = Math.max(0, Math.min(1, progress));
+
+            let activeIndex = Math.floor(progress * cards.length);
+            if (activeIndex === cards.length) {
+                activeIndex = cards.length - 1;
+            }
+
+            let localProgress = (progress * cards.length) - activeIndex;
+
+            cards.forEach((card, index) => {
+                if (index < activeIndex) {
+                    card.style.opacity = 0;
+                    card.style.transform = 'translateY(-100vh)';
+                    card.style.zIndex = 1;
+                }
+                else if (index > activeIndex) {
+                    card.style.opacity = 0;
+                    card.style.transform = 'translateY(100vh)';
+                    card.style.zIndex = 1;
+                }
+                else {
+                    card.style.zIndex = 10;
+
+                    if (localProgress < 0.2) {
+                        let enterProgress = localProgress / 0.2;
+                        card.style.opacity = enterProgress;
+                        card.style.transform = `translateY(${100 - (enterProgress * 100)}vh)`;
+                    }
+                    else if (localProgress > 0.8) {
+                        let exitProgress = (localProgress - 0.8) / 0.2;
+                        let organicExit = exitProgress * exitProgress;
+                        card.style.opacity = 1 - exitProgress;
+                        card.style.transform = `translateY(${-organicExit * 100}vh)`;
+                    }
+                    else {
+                        card.style.opacity = 1;
+                        card.style.transform = 'translateY(0)';
+                    }
+                }
+            });
+
+            // -------------------------------------------------------------
+            // FIXED FULL-FILL VIEWPORT HIGHLIGHT ANIMATION
+            // -------------------------------------------------------------
+            const gridSection = document.getElementById('gridContainer');
+            const gridRect = gridSection.getBoundingClientRect();
+            
+            // Calculates progress based on when the grid enters the screen and fills up by the time it reaches the middle/top
+            const triggerStart = window.innerHeight * 0.9;
+            const triggerEnd = window.innerHeight * 0.2;
+            
+            let gridScrollProgress = (triggerStart - gridRect.top) / (triggerStart - triggerEnd);
+            gridScrollProgress = Math.max(0, Math.min(1, gridScrollProgress));
+
+            // Apply background-size percentage dynamically to reveal completely from left to right
+            const highlights = document.querySelectorAll('.suffix-highlight');
+            highlights.forEach(hl => {
+                hl.style.backgroundSize = `${gridScrollProgress * 100}% 100%`;
+            });
+        });
+
+        // Suffix mapping dataset
+        const rawData = [
+            { suffix: "pur", cities: ["Brahmapur", "Hindupur", "Nagpur"] },
+            { suffix: "nagar", cities: ["Modinagar", "Krishnanagar", "Ahmednagar"] },
+            { suffix: "abad", cities: ["Nizamabad", "Mustafabad"] },
+            { suffix: "ur", cities: ["Kannur", "Mandsaur", "Nilambur"] },
+            { suffix: "garh", cities: ["Fatehgarh", "Chandigarh"] },
+            { suffix: "gaon", cities: ["Khamgaon", "Bongaigaon", "Chaygaon"] },
+            { suffix: "oli", cities: ["Deoli", "Saoli"] },
+            { suffix: "ore", cities: ["Sehore", "Nellore", "Vellore"] },
+            { suffix: "tur", cities: ["Guntur", "Jintur", "Latur"] },
+            { suffix: "ni", cities: ["Theni", "Parbhani", "Bhiwani"] },
+            { suffix: "puram", cities: ["Kancheepuram", "Malappuram"] },
+            { suffix: "kad", cities: ["Puthukkad", "Palakkad", "Thalakkad"] },
+            { suffix: "hat", cities: ["Jorhat", "Balurghat"] },
+            { suffix: "khed", cities: ["Mudkhed", "Narkhed"] },
+            { suffix: "sar", cities: ["Thanesar", "Amritsar", "Muktsar"] },
+            { suffix: "kottai", cities: ["Pattukottai", "Pudukottai"] },
+            { suffix: "kulam", cities: ["Muthukulam", "Mararikulam", "Kayamkulam"] },
+            { suffix: "wadi", cities: ["Sanaswadi", "Hinjawadi"] },
+            { suffix: "ner", cities: ["Sangamner", "Saoner", "Parner"] },
+            { suffix: "para", cities: ["Bhatpara", "Goalpara", "Rangapara"] },
+            { suffix: "palli", cities: ["Peddapalli", "Abhirapalli", "Asapalli"] },
+            { suffix: "kudi", cities: ["Karaikkudi", "Paramakudi", "Thoothukkudi"] },
+            { suffix: "bhavi", cities: ["Sulibhavi", "Bilebhavi", "Thondebhavi"] },
+            { suffix: "kot", cities: ["Pathankot", "Bagalkot", "Rajkot"] },
+            { suffix: "vali", cities: ["Kandivali", "Karivali"] },
+            { suffix: "pet", cities: ["Hospet", "Suryapet"] },
+            { suffix: "angadi", cities: ["Tirurangadi", "Parappanangadi", "Melangadi"] },
+            { suffix: "ganj", cities: ["Kasganj", "Kishanganj", "Raiganj"] },
+            { suffix: "patnam", cities: ["Visakhapatnam", "Krishnapatnam", "Machilipatnam"] },
+            { suffix: "uru", cities: ["Eluru", "Bengaluru", "Mysuru"] }
+        ];
+
+        let finalItems = [];
+        rawData.forEach(item => {
+            item.cities.forEach(cityName => {
+                finalItems.push({ city: cityName, suffix: item.suffix });
+            });
+        });
+
+        const container = document.getElementById('gridContainer');
+        container.innerHTML = "";
+
+        finalItems.forEach(item => {
+            const fullName = item.city;
+            const sfx = item.suffix;
+            
+            const lowerName = fullName.toLowerCase();
+            const lowerSfx = sfx.toLowerCase();
+            const index = lowerName.lastIndexOf(lowerSfx);
+
+            let prefix = fullName;
+            let matchingPart = "";
+
+            if (index !== -1) {
+                prefix = fullName.substring(0, index);
+                matchingPart = fullName.substring(index);
+            }
+
+            const cell = document.createElement('div');
+            cell.className = 'city-cell';
+            cell.style.cssText = "font-family: 'Platypi', serif; font-size: clamp(0.9rem, 1.2vw, 1.25rem); font-weight: 500; white-space: nowrap; display: flex; align-items: center; justify-content: flex-start; width: 100%;";
+
+            const prefixSpan = document.createElement('span');
+            prefixSpan.textContent = prefix;
+            cell.appendChild(prefixSpan);
+
+            if (matchingPart) {
+                const matchSpan = document.createElement('span');
+                matchSpan.className = 'suffix-highlight';
+                // Sets up a gradient background mask that wipes from 0% (left) to 100% (right) on scroll
+                matchSpan.style.cssText = "background: linear-gradient(to right, #F483D5 100%, transparent 0%) no-repeat left center; background-size: 0% 100%; color: #000000; padding: 1px 5px; margin-left: 3px; border-radius: 0px; transition: background-size 0.1s ease-out;";
+                matchSpan.textContent = matchingPart;
+                cell.appendChild(matchSpan);
+            }
+
+            container.appendChild(cell);
+        });
+
+        
+    </script>
+
+</body>
+</html>
