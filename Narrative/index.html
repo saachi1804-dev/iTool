@@ -175,6 +175,10 @@
             </div>
 
             <!-- Cards -->
+              <div class="card-image" data-index="0">
+                <img src="first.png" alt="Artwork n1">
+            </div>
+
             <div class="card-image" data-index="0">
                 <img src="1.png" alt="Artwork n1">
             </div>
@@ -188,7 +192,7 @@
             </div>
 
             <div class="card-image" data-index="3">
-                <img src="n4.png" alt="Artwork n4">
+                <img src="last.png" alt="Artwork n4">
             </div>
         </div>
     </section>
@@ -871,6 +875,13 @@
             let localProgress = (progress * cards.length) - activeIndex;
 
             cards.forEach((card, index) => {
+                if (index === 0) {
+                    card.style.opacity = 1;
+                    card.style.transform = 'translateY(0)';
+                    card.style.zIndex = 12;
+                    return;
+                }
+
                 if (index < activeIndex) {
                     card.style.opacity = 0;
                     card.style.transform = 'translateY(-100vh)';
