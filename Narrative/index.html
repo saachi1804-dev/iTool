@@ -875,13 +875,6 @@
             let localProgress = (progress * cards.length) - activeIndex;
 
             cards.forEach((card, index) => {
-                if (index === 0) {
-                    card.style.opacity = 1;
-                    card.style.transform = 'translateY(0)';
-                    card.style.zIndex = 12;
-                    return;
-                }
-
                 if (index < activeIndex) {
                     card.style.opacity = 0;
                     card.style.transform = 'translateY(-100vh)';
