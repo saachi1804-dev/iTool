@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Bar Chart - Observable Plot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #faf8f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0 0 6px 0;
+            text-align: center;
+        }
+
+        #chart {
+            background: transparent;
+            width: 100%;
+            max-width: 900px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #chart svg {
+            width: 100%;
+            max-width: 900px;
+            height: auto;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Statewise Language Distribution</h1>
+
+    <!-- Interactive Legend / Filter -->
+    <div id="chart-legend" style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 6px; font-family: 'Bricolage Grotesque', sans-serif; flex-wrap: wrap;">
+      <span style="font-size: 13px; color: #555; font-weight: 500;">Filter:</span>
+      <button type="button" class="chart-legend-btn" data-filter="All"
+        style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; border: 1.5px solid #222; background: #222; color: #fff; font-size: 12.5px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.15s ease;">
+        All
+      </button>
+      <button type="button" class="chart-legend-btn" data-filter="Official"
+        style="display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: transparent; color: #333; font-size: 12.5px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.15s ease;">
+        <span class="swatch" style="width: 9px; height: 9px; border-radius: 2px; background-color: #E65855; display: inline-block;"></span>
+        Official
+      </button>
+      <button type="button" class="chart-legend-btn" data-filter="Non-Official"
+        style="display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px; border-radius: 20px; border: 1.5px solid #cbd5e1; background: transparent; color: #333; font-size: 12.5px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.15s ease;">
+        <span class="swatch" style="width: 9px; height: 9px; border-radius: 2px; background-color: #C5EA4B; display: inline-block;"></span>
+        Non-Official
+      </button>
+    </div>
+    <div id="chart-hint" style="font-size: 11.5px; color: #64748b; font-style: italic; margin-bottom: 8px; font-family: 'Bricolage Grotesque', sans-serif;">
+      Showing all languages (normalized barcode view). Click Official or Non-Official to view speaker counts.
+    </div>
+
+    <div id="chart"></div>
+
+    <!-- Import D3 and Observable Plot via CDN -->
+    <script type="module">
+        import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+        import * as Plot from "https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/+esm";
+
+        async function initChart() {
+            try {
+                // 1. Load the CSV file from the same directory
+                const data = await d3.csv("Language_Statewise.csv");
+
+                const scheduledLanguages = new Set([
+                    "ASSAMESE", "BENGALI", "BODO", "DOGRI", "GUJARATI", "HINDI", "KANNADA",
+                    "KASHMIRI", "KONKANI", "MAITHILI", "MALAYALAM", "MANIPURI", "MARATHI",
+                    "NEPALI", "ODIA", "PUNJABI", "SANSKRIT", "SANTALI", "SINDHI", "TAMIL",
+                    "TELUGU", "URDU"
+                ]);
+
+                function toTitleCase(text) {
+                    return String(text)
+                        .toLowerCase()
+                        .replace(/\b[a-z]/g, char => char.toUpperCase());
+                }
+
+                function formatCompact(n) {
+                    if (n >= 1e6) {
+                        return (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+                    }
+                    if (n >= 1e3) {
+                        return (n / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+                    }
+                    return n.toLocaleString();
+                }
+
+                const processedData = data
+                    .filter(d => d.Language.trim().toUpperCase() !== "ENGLISH")
+                    .map(d => ({
+                        State: toTitleCase(d.State.trim()),
+                        Language: d.Language.trim().toUpperCase(),
+                        TotalPersons: +d["Total Persons"],
+                        OfficialStatus: scheduledLanguages.has(d.Language.trim().toUpperCase())
+                            ? "Official"
+                            : "Non-Official"
+                    }));
+
+                let currentFilter = "All";
+
+                function updateLegendUI() {
+                    const buttons = document.querySelectorAll(".chart-legend-btn");
+                    buttons.forEach(btn => {
+                        const filterType = btn.dataset.filter;
+                        if (filterType === currentFilter) {
+                            if (filterType === "Official") {
+                                btn.style.background = "#E65855";
+                                btn.style.borderColor = "#E65855";
+                                btn.style.color = "#ffffff";
+                                btn.style.opacity = "1";
+                            } else if (filterType === "Non-Official") {
+                                btn.style.background = "#C5EA4B";
+                                btn.style.borderColor = "#a4cc26";
+                                btn.style.color = "#171617";
+                                btn.style.opacity = "1";
+                            } else {
+                                btn.style.background = "#222222";
+                                btn.style.borderColor = "#222222";
+                                btn.style.color = "#ffffff";
+                                btn.style.opacity = "1";
+                            }
+                            btn.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+                        } else {
+                            btn.style.background = "transparent";
+                            btn.style.borderColor = "#cbd5e1";
+                            btn.style.color = "#475569";
+                            btn.style.boxShadow = "none";
+                            btn.style.opacity = currentFilter === "All" ? "1" : "0.5";
+                        }
+                    });
+
+                    const hint = document.getElementById("chart-hint");
+                    if (hint) {
+                        if (currentFilter === "Official") {
+                            hint.textContent = "Showing Official (Scheduled) languages ranked by total speakers with speaker counts.";
+                        } else if (currentFilter === "Non-Official") {
+                            hint.textContent = "Showing Non-Official languages ranked by total speakers with speaker counts.";
+                        } else {
+                            hint.textContent = "Showing all languages (normalized barcode view). Click Official or Non-Official to view speaker counts.";
+                        }
+                    }
+                }
+
+                function render() {
+                    const isFiltered = currentFilter !== "All";
+                    const filteredData = isFiltered
+                        ? processedData.filter(d => d.OfficialStatus === currentFilter)
+                        : processedData;
+
+                    const stateTotals = Array.from(
+                        d3.rollup(filteredData, v => d3.sum(v, d => d.TotalPersons), d => d.State),
+                        ([State, TotalPersons]) => ({ State, TotalPersons })
+                    ).filter(d => d.TotalPersons > 0);
+
+                    const allStates = Array.from(new Set(processedData.map(d => d.State)));
+                    const stateTotalLookup = new Map(stateTotals.map(d => [d.State, d.TotalPersons]));
+                    const sortedStates = allStates.slice().sort((a, b) => {
+                        return (stateTotalLookup.get(b) || 0) - (stateTotalLookup.get(a) || 0);
+                    });
+
+                    const marks = [
+                        Plot.barX(filteredData, {
+                            y: "State",
+                            x: "TotalPersons",
+                            fill: "OfficialStatus",
+                            offset: isFiltered ? null : "normalize",
+                            insetLeft: 0.5,
+                            insetRight: 0.5,
+                            insetTop: 1.5,
+                            insetBottom: 1.5,
+                            tip: true,
+                            title: d => `${d.State}\nLanguage: ${d.Language}\nSpeakers: ${d.TotalPersons.toLocaleString()} (${d.OfficialStatus})`
+                        })
+                    ];
+
+                    if (isFiltered) {
+                        marks.push(
+                            Plot.text(stateTotals, {
+                                y: "State",
+                                x: "TotalPersons",
+                                text: d => formatCompact(d.TotalPersons),
+                                dx: 6,
+                                textAnchor: "start",
+                                fill: "#1e293b",
+                                fontSize: 10.5,
+                                fontWeight: 600,
+                                fontFamily: "'Bricolage Grotesque', sans-serif"
+                            })
+                        );
+                    }
+
+                    const chart = Plot.plot({
+                        style: {
+                            fontFamily: "'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, sans-serif",
+                            fontSize: "9.5px"
+                        },
+                        marginLeft: 140,
+                        marginRight: isFiltered ? 75 : 35,
+                        marginTop: 6,
+                        marginBottom: isFiltered ? 32 : 12,
+                        height: 700,
+                        width: 900,
+                        x: isFiltered
+                            ? {
+                                axis: "bottom",
+                                label: "Speakers →",
+                                labelAnchor: "right",
+                                tickFormat: d => d >= 1e6 ? `${(d / 1e6).toFixed(0)}M` : d >= 1e3 ? `${(d / 1e3).toFixed(0)}K` : d,
+                                grid: true
+                            }
+                            : {
+                                axis: null
+                            },
+                        y: {
+                            label: null,
+                            domain: sortedStates,
+                            padding: 0.22
+                        },
+                        color: {
+                            legend: false,
+                            domain: ["Official", "Non-Official"],
+                            range: ["#E65855", "#C5EA4B"]
+                        },
+                        marks
+                    });
+
+                    const container = document.getElementById("chart");
+                    container.innerHTML = "";
+                    container.appendChild(chart);
+                }
+
+                // Attach legend button listeners
+                const buttons = document.querySelectorAll(".chart-legend-btn");
+                buttons.forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        const filterType = btn.dataset.filter;
+                        if (currentFilter === filterType && filterType !== "All") {
+                            currentFilter = "All";
+                        } else {
+                            currentFilter = filterType;
+                        }
+                        updateLegendUI();
+                        render();
+                    });
+                });
+
+                updateLegendUI();
+                render();
+
+            } catch (error) {
+                console.error("Error loading or rendering chart:", error);
+                document.getElementById("chart").innerHTML = `<p style="color:red;">Error loading chart. Make sure you are running this through a local server (like Live Server in VS Code) and 'Language_Statewise.csv' is in the same folder.</p>`;
+            }
+        }
+
+        initChart();
+    </script>
+</body>
+
+</html>
