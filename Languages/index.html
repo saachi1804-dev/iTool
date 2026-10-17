@@ -6,15 +6,96 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>iTool Banner</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Google Fonts for Bricolage Grotesque and Playfair Display Italic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Playfair+Display:ital,wght@1@400..700&display=swap"
+    rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+  <style>
+    /* Hero Section Styles & Bouncy Arrow Animation */
+    .hero-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 40px 20px;
+      box-sizing: border-box;
+      background-color: #ffffff;
+      font-family: 'Bricolage Grotesque', sans-serif;
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 5vw, 4.5rem);
+      font-weight: 400;
+      line-height: 1.2;
+      color: #111111;
+      max-width: 900px;
+      margin: 0 0 24px 0;
+    }
+
+    .hero-title .italic-serif {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(0.95rem, 1.5vw, 1.15rem);
+      color: #333333;
+      margin: 0 0 48px 0;
+      font-weight: 400;
+    }
+
+    .bouncy-arrow {
+      width: 32px;
+      height: 32px;
+      stroke: #111111;
+      stroke-width: 2.5;
+      fill: none;
+      animation: bounce 2s infinite ease-in-out;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      20%,
+      50%,
+      80%,
+      100% {
+        transform: translateY(0);
+      }
+
+      40% {
+        transform: translateY(-12px);
+      }
+
+      60% {
+        transform: translateY(-6px);
+      }
+    }
+  </style>
 </head>
 
 <body>
-  <img src="1 (3).png" alt="Banner image">
-  <p class="banner-text">Open your mouth in India and you are rolling dice. When asked about their mother tongue and
-    other languages they can speak and understand, people across the country give thousands of different answers. Most
-    of those languages will never appear on a map, in a textbook, or on a road sign.</p>
 
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <h1 class="hero-title">
+      How likely are you to share a <span class="italic-serif">language</span> with a <span
+        class="italic-serif">local</span> when travelling?
+    </h1>
+    <p class="hero-subtitle">Exploring the probability of sharing a language with locals across India.</p>
+
+    <!-- Bouncy Arrow SVG -->
+    <svg class="bouncy-arrow" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+    </svg>
+  </section>
   <!-- Frieze Character Grid Scrollytelling Section -->
   <section style="position: relative; height: 300vh; background-color: transparent; margin-top: 40px;">
 
@@ -521,7 +602,7 @@
         .attr("preserveAspectRatio", "xMidYMid meet")
         .style("width", "100%")
         .style("height", "auto")
-        .style("background", "#f9ffe9")
+        .style("background", "#ffffff")
         .attr("font-family", "'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, sans-serif")
 
       let hoveredLanguage = null;
